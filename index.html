@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Payroll Hours Tracker</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
   <style>
     :root {
       --bg: #f4f7fb;
@@ -14,7 +17,12 @@
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
       --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --secondary: #e5e7eb;
+      --secondary-hover: #d1d5db;
       --success: #059669;
+      --warning-bg: #fff7ed;
+      --warning-border: #fdba74;
     }
 
     * {
@@ -30,12 +38,12 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1250px;
       margin: 0 auto;
     }
 
-    h1 {
-      margin-bottom: 8px;
+    h1, h2, h3 {
+      margin-top: 0;
     }
 
     .subtitle {
@@ -57,21 +65,21 @@
       gap: 12px;
     }
 
-    .grid .full {
-      grid-column: 1 / -1;
-    }
-
-    .grid .span-2 {
-      grid-column: span 2;
-    }
-
-    .grid .span-3 {
-      grid-column: span 3;
-    }
-
     .field {
       display: flex;
       flex-direction: column;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .span-2 {
+      grid-column: span 2;
+    }
+
+    .span-3 {
+      grid-column: span 3;
     }
 
     label {
@@ -80,11 +88,20 @@
       margin-bottom: 6px;
     }
 
-    input, select, button {
+    input, select, textarea, button {
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 10px;
       font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    input[readonly] {
+      background: #f9fafb;
     }
 
     button {
@@ -100,20 +117,42 @@
     }
 
     .secondary {
-      background: #e5e7eb;
+      background: var(--secondary);
       color: #111827;
     }
 
     .secondary:hover {
-      background: #d1d5db;
+      background: var(--secondary-hover);
     }
 
     .danger {
       background: var(--danger);
+      color: white;
     }
 
     .danger:hover {
-      background: #b91c1c;
+      background: var(--danger-hover);
+    }
+
+    .success {
+      background: var(--success);
+      color: white;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .summary {
@@ -122,6 +161,7 @@
       gap: 20px;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 12px;
     }
 
     .summary-box {
@@ -139,6 +179,22 @@
       color: var(--success);
     }
 
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .notice {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--warning-border);
+      background: var(--warning-bg);
+      border-radius: 10px;
+      font-size: 13px;
+      color: #9a3412;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -150,6 +206,7 @@
       padding: 12px 10px;
       border-bottom: 1px solid #e5e7eb;
       font-size: 14px;
+      vertical-align: top;
     }
 
     th {
@@ -168,22 +225,65 @@
     .row-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .small {
+    .activity-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+
+    .activity-name {
+      font-weight: 600;
+    }
+
+    .pill {
+      display: inline-block;
       font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      margin-left: 8px;
     }
 
-    @media (max-width: 900px) {
+    .cycle-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .notes-cell {
+      max-width: 260px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
       .grid {
         grid-template-columns: 1fr;
       }
 
-      .grid .span-2,
-      .grid .span-3,
-      .grid .full {
+      .full,
+      .span-2,
+      .span-3 {
         grid-column: auto;
       }
 
@@ -215,6 +315,15 @@
         margin-bottom: 4px;
         color: var(--muted);
       }
+
+      .right {
+        text-align: left;
+      }
+
+      .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -226,7 +335,7 @@
     </div>
 
     <div class="card">
-      <h2>Add Work Entry</h2>
+      <h2 id="entryFormTitle">Add Work Entry</h2>
       <div class="grid">
         <div class="field">
           <label for="workDate">Date</label>
@@ -236,7 +345,7 @@
         <div class="field span-2">
           <label for="activitySelect">Activity</label>
           <select id="activitySelect"></select>
-          <div class="small">Choose an activity or add a new one below.</div>
+          <div class="small">Choose an activity from the saved list.</div>
         </div>
 
         <div class="field span-2">
@@ -263,17 +372,39 @@
         </div>
 
         <div class="field full">
-          <button type="button" id="saveEntryBtn">Save Entry</button>
+          <label for="notes">Notes</label>
+          <textarea id="notes" placeholder="Optional notes for the day / activity"></textarea>
+        </div>
+
+        <div class="field full">
+          <div class="row-actions">
+            <button type="button" id="saveEntryBtn">Save Entry</button>
+            <button type="button" id="cancelEditBtn" class="secondary" style="display:none;">Cancel Edit</button>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Current Payroll Cycle</h2>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <h2 style="margin:0;">Payroll Cycle View</h2>
+        </div>
+        <div class="toolbar-right">
+          <button type="button" class="secondary" id="exportCsvBtn">Export CSV</button>
+          <button type="button" class="secondary" id="exportPdfBtn">Export PDF Summary</button>
+        </div>
+      </div>
+
       <div class="summary">
         <div>
-          <div id="cycleLabel"></div>
-          <div class="small">Entries shown below are only for this pay cycle.</div>
+          <div class="cycle-nav">
+            <button type="button" class="secondary" id="prevCycleBtn">Previous</button>
+            <div id="cycleLabel"></div>
+            <button type="button" class="secondary" id="nextCycleBtn">Next</button>
+            <button type="button" class="secondary" id="currentCycleBtn">Current</button>
+          </div>
+          <div class="small">Use the buttons to view past or future payroll cycles.</div>
         </div>
         <div class="summary-box">
           Total Hours
@@ -289,12 +420,25 @@
             <th>Start</th>
             <th>End</th>
             <th class="right">Hours</th>
+            <th>Notes</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="entriesTableBody"></tbody>
       </table>
       <div id="emptyMessage" class="empty" style="display:none;">No entries in this payroll cycle yet.</div>
+    </div>
+
+    <div class="card">
+      <h2>Manage Activities</h2>
+      <div class="small">
+        Deleting an activity removes it from the dropdown for future use. Existing saved entries will still keep their original activity name.
+      </div>
+      <div id="activityList" class="activity-list"></div>
+      <div id="activityEmptyMessage" class="empty" style="display:none;">No activities saved.</div>
+      <div class="notice">
+        Tip: activities already used in entries can still be deleted from the dropdown list without affecting old records.
+      </div>
     </div>
   </div>
 
@@ -319,15 +463,28 @@
     const startTime = document.getElementById("startTime");
     const endTime = document.getElementById("endTime");
     const calculatedHours = document.getElementById("calculatedHours");
+    const notes = document.getElementById("notes");
     const saveEntryBtn = document.getElementById("saveEntryBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const entryFormTitle = document.getElementById("entryFormTitle");
     const entriesTableBody = document.getElementById("entriesTableBody");
     const totalHours = document.getElementById("totalHours");
     const cycleLabel = document.getElementById("cycleLabel");
     const emptyMessage = document.getElementById("emptyMessage");
+    const activityList = document.getElementById("activityList");
+    const activityEmptyMessage = document.getElementById("activityEmptyMessage");
+    const exportPdfBtn = document.getElementById("exportPdfBtn");
+    const exportCsvBtn = document.getElementById("exportCsvBtn");
+    const prevCycleBtn = document.getElementById("prevCycleBtn");
+    const nextCycleBtn = document.getElementById("nextCycleBtn");
+    const currentCycleBtn = document.getElementById("currentCycleBtn");
+
+    let selectedCycleDate = new Date();
+    let editingEntryId = null;
 
     function loadActivities() {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.activities) || "null");
-      return Array.isArray(saved) && saved.length ? saved : defaultActivities;
+      return Array.isArray(saved) && saved.length ? saved : [...defaultActivities];
     }
 
     function saveActivities(activities) {
@@ -342,8 +499,19 @@
       localStorage.setItem(STORAGE_KEYS.entries, JSON.stringify(entries));
     }
 
-    function renderActivities() {
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderActivitiesDropdown() {
       const activities = loadActivities();
+      const currentValue = activitySelect.value;
+
       activitySelect.innerHTML = "";
 
       activities.forEach(activity => {
@@ -352,10 +520,59 @@
         option.textContent = activity;
         activitySelect.appendChild(option);
       });
+
+      if (activities.includes(currentValue)) {
+        activitySelect.value = currentValue;
+      } else if (activities.length) {
+        activitySelect.value = activities[0];
+      }
+    }
+
+    function renderActivityManager() {
+      const activities = loadActivities();
+      const entries = loadEntries();
+
+      activityList.innerHTML = "";
+
+      if (!activities.length) {
+        activityEmptyMessage.style.display = "block";
+        return;
+      }
+
+      activityEmptyMessage.style.display = "none";
+
+      activities.forEach(activity => {
+        const usageCount = entries.filter(
+          entry => entry.activity.toLowerCase() === activity.toLowerCase()
+        ).length;
+
+        const item = document.createElement("div");
+        item.className = "activity-item";
+
+        item.innerHTML = `
+          <div>
+            <span class="activity-name">${escapeHtml(activity)}</span>
+            <span class="pill">${usageCount} saved entr${usageCount === 1 ? "y" : "ies"}</span>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="danger" data-activity="${encodeURIComponent(activity)}">Delete</button>
+          </div>
+        `;
+
+        activityList.appendChild(item);
+      });
+
+      activityList.querySelectorAll("button[data-activity]").forEach(button => {
+        button.addEventListener("click", () => {
+          const activity = decodeURIComponent(button.dataset.activity);
+          deleteActivity(activity);
+        });
+      });
     }
 
     function addActivity() {
       const value = newActivity.value.trim();
+
       if (!value) {
         alert("Please enter an activity name.");
         return;
@@ -372,9 +589,27 @@
       activities.push(value);
       activities.sort((a, b) => a.localeCompare(b));
       saveActivities(activities);
-      renderActivities();
+
+      renderActivitiesDropdown();
+      renderActivityManager();
       activitySelect.value = value;
       newActivity.value = "";
+    }
+
+    function deleteActivity(activityToDelete) {
+      const activities = loadActivities();
+      const filtered = activities.filter(a => a.toLowerCase() !== activityToDelete.toLowerCase());
+
+      if (filtered.length === activities.length) return;
+
+      const confirmed = confirm(
+        `Delete activity "${activityToDelete}" from the dropdown list? Existing saved entries will not be changed.`
+      );
+      if (!confirmed) return;
+
+      saveActivities(filtered);
+      renderActivitiesDropdown();
+      renderActivityManager();
     }
 
     function calculateHours(start, end) {
@@ -386,13 +621,11 @@
       let startMinutes = startH * 60 + startM;
       let endMinutes = endH * 60 + endM;
 
-      // Allows overnight shifts
       if (endMinutes < startMinutes) {
         endMinutes += 24 * 60;
       }
 
-      const diff = endMinutes - startMinutes;
-      return diff / 60;
+      return (endMinutes - startMinutes) / 60;
     }
 
     function updateCalculatedHours() {
@@ -418,9 +651,26 @@
       return { cycleStart, cycleEnd };
     }
 
+    function changeCycle(monthOffset) {
+      const base = new Date(selectedCycleDate);
+      base.setMonth(base.getMonth() + monthOffset);
+      selectedCycleDate = base;
+      renderEntries();
+    }
+
     function formatDate(dateStr) {
       const date = new Date(dateStr + "T00:00:00");
       return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function formatDateLong(dateStr) {
+      const date = new Date(dateStr + "T00:00:00");
+      return date.toLocaleDateString(undefined, {
+        weekday: "short",
         year: "numeric",
         month: "short",
         day: "numeric"
@@ -443,15 +693,68 @@
       return `${startText} to ${endText}`;
     }
 
+    function getCycleEntries(date = new Date()) {
+      const entries = loadEntries();
+      const { cycleStart, cycleEnd } = getPayrollCycle(date);
+
+      const cycleEntries = entries
+        .filter(entry => {
+          const entryDate = new Date(entry.date + "T00:00:00");
+          return entryDate >= cycleStart && entryDate <= cycleEnd;
+        })
+        .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+      return { cycleEntries, cycleStart, cycleEnd };
+    }
+
+    function resetForm() {
+      editingEntryId = null;
+      entryFormTitle.textContent = "Add Work Entry";
+      saveEntryBtn.textContent = "Save Entry";
+      cancelEditBtn.style.display = "none";
+      startTime.value = "";
+      endTime.value = "";
+      calculatedHours.value = "";
+      notes.value = "";
+      setTodayAsDefaultDate();
+      renderActivitiesDropdown();
+    }
+
+    function fillFormForEdit(entry) {
+      editingEntryId = entry.id;
+      entryFormTitle.textContent = "Edit Work Entry";
+      saveEntryBtn.textContent = "Update Entry";
+      cancelEditBtn.style.display = "inline-block";
+
+      workDate.value = entry.date;
+      startTime.value = entry.start;
+      endTime.value = entry.end;
+      calculatedHours.value = Number(entry.hours).toFixed(2);
+      notes.value = entry.notes || "";
+
+      const activities = loadActivities();
+      if (!activities.some(a => a.toLowerCase() === entry.activity.toLowerCase())) {
+        activities.push(entry.activity);
+        activities.sort((a, b) => a.localeCompare(b));
+        saveActivities(activities);
+        renderActivitiesDropdown();
+        renderActivityManager();
+      }
+
+      activitySelect.value = entry.activity;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     function saveEntry() {
       const date = workDate.value;
       const activity = activitySelect.value;
       const start = startTime.value;
       const end = endTime.value;
+      const entryNotes = notes.value.trim();
       const hours = calculateHours(start, end);
 
       if (!date || !activity || !start || !end) {
-        alert("Please complete all fields.");
+        alert("Please complete all required fields.");
         return;
       }
 
@@ -461,41 +764,70 @@
       }
 
       const entries = loadEntries();
-      entries.push({
-        id: crypto.randomUUID(),
-        date,
-        activity,
-        start,
-        end,
-        hours: Number(hours.toFixed(2))
-      });
+
+      if (editingEntryId) {
+        const index = entries.findIndex(entry => entry.id === editingEntryId);
+        if (index === -1) {
+          alert("Could not find the entry to update.");
+          resetForm();
+          return;
+        }
+
+        entries[index] = {
+          ...entries[index],
+          date,
+          activity,
+          start,
+          end,
+          hours: Number(hours.toFixed(2)),
+          notes: entryNotes
+        };
+      } else {
+        entries.push({
+          id: crypto.randomUUID(),
+          date,
+          activity,
+          start,
+          end,
+          hours: Number(hours.toFixed(2)),
+          notes: entryNotes
+        });
+      }
 
       saveEntries(entries);
-      startTime.value = "";
-      endTime.value = "";
-      calculatedHours.value = "";
+      resetForm();
       renderEntries();
+      renderActivityManager();
     }
 
     function deleteEntry(id) {
+      const confirmed = confirm("Delete this entry?");
+      if (!confirmed) return;
+
       const entries = loadEntries().filter(entry => entry.id !== id);
       saveEntries(entries);
+
+      if (editingEntryId === id) {
+        resetForm();
+      }
+
       renderEntries();
+      renderActivityManager();
+    }
+
+    function editEntry(id) {
+      const entry = loadEntries().find(item => item.id === id);
+      if (!entry) {
+        alert("Could not find that entry.");
+        return;
+      }
+      fillFormForEdit(entry);
     }
 
     function renderEntries() {
-      const entries = loadEntries();
-      const { cycleStart, cycleEnd } = getPayrollCycle(new Date());
+      const { cycleEntries, cycleStart, cycleEnd } = getCycleEntries(selectedCycleDate);
 
       cycleLabel.textContent = `Pay cycle: ${formatCycleRange(cycleStart, cycleEnd)}`;
-
-      const cycleEntries = entries
-        .filter(entry => {
-          const entryDate = new Date(entry.date + "T00:00:00");
-          return entryDate >= cycleStart && entryDate <= cycleEnd;
-        })
-        .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
-
       entriesTableBody.innerHTML = "";
 
       if (!cycleEntries.length) {
@@ -512,13 +844,15 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td data-label="Date">${formatDate(entry.date)}</td>
-          <td data-label="Activity">${entry.activity}</td>
+          <td data-label="Activity">${escapeHtml(entry.activity)}</td>
           <td data-label="Start">${entry.start}</td>
           <td data-label="End">${entry.end}</td>
           <td data-label="Hours" class="right">${Number(entry.hours).toFixed(2)}</td>
+          <td data-label="Notes" class="notes-cell">${entry.notes ? escapeHtml(entry.notes) : '<span class="muted">—</span>'}</td>
           <td data-label="Actions">
             <div class="row-actions">
-              <button type="button" class="danger" data-id="${entry.id}">Delete</button>
+              <button type="button" class="secondary" data-edit-id="${entry.id}">Edit</button>
+              <button type="button" class="danger" data-delete-id="${entry.id}">Delete</button>
             </div>
           </td>
         `;
@@ -527,8 +861,12 @@
 
       totalHours.textContent = total.toFixed(2);
 
-      document.querySelectorAll(".danger[data-id]").forEach(btn => {
-        btn.addEventListener("click", () => deleteEntry(btn.dataset.id));
+      document.querySelectorAll("[data-edit-id]").forEach(btn => {
+        btn.addEventListener("click", () => editEntry(btn.dataset.editId));
+      });
+
+      document.querySelectorAll("[data-delete-id]").forEach(btn => {
+        btn.addEventListener("click", () => deleteEntry(btn.dataset.deleteId));
       });
     }
 
@@ -540,14 +878,208 @@
       workDate.value = `${yyyy}-${mm}-${dd}`;
     }
 
+    function csvEscape(value) {
+      const str = String(value ?? "");
+      return `"${str.replaceAll('"', '""')}"`;
+    }
+
+    function exportCsv() {
+      const { cycleEntries, cycleStart, cycleEnd } = getCycleEntries(selectedCycleDate);
+
+      if (!cycleEntries.length) {
+        alert("There are no entries in this payroll cycle to export.");
+        return;
+      }
+
+      let total = 0;
+      const rows = [
+        ["Payroll Hours Summary"],
+        ["Pay cycle", formatCycleRange(cycleStart, cycleEnd)],
+        [],
+        ["Date", "Activity", "Start", "End", "Hours", "Notes"]
+      ];
+
+      cycleEntries.forEach(entry => {
+        total += Number(entry.hours);
+        rows.push([
+          entry.date,
+          entry.activity,
+          entry.start,
+          entry.end,
+          Number(entry.hours).toFixed(2),
+          entry.notes || ""
+        ]);
+      });
+
+      rows.push([]);
+      rows.push(["Period Total", "", "", "", total.toFixed(2), ""]);
+
+      const csvContent = rows
+        .map(row => row.map(csvEscape).join(","))
+        .join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const startPart = cycleStart.toISOString().slice(0, 10);
+      const endPart = cycleEnd.toISOString().slice(0, 10);
+
+      a.href = url;
+      a.download = `payroll-summary-${startPart}-to-${endPart}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportPdfSummary() {
+      const { cycleEntries, cycleStart, cycleEnd } = getCycleEntries(selectedCycleDate);
+
+      if (!cycleEntries.length) {
+        alert("There are no entries in this payroll cycle to export.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      const marginLeft = 12;
+      const marginRight = 12;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const usableWidth = pageWidth - marginLeft - marginRight;
+      let y = 16;
+
+      const groupedByDate = {};
+      let cycleTotal = 0;
+
+      cycleEntries.forEach(entry => {
+        if (!groupedByDate[entry.date]) {
+          groupedByDate[entry.date] = [];
+        }
+        groupedByDate[entry.date].push(entry);
+        cycleTotal += Number(entry.hours);
+      });
+
+      const sortedDates = Object.keys(groupedByDate).sort();
+
+      function ensureSpace(requiredHeight = 10) {
+        if (y + requiredHeight > pageHeight - 15) {
+          doc.addPage();
+          y = 16;
+        }
+      }
+
+      function addWrappedText(text, x, currentY, width, fontSize = 10, style = "normal") {
+        doc.setFont("helvetica", style);
+        doc.setFontSize(fontSize);
+        const lines = doc.splitTextToSize(String(text || ""), width);
+        doc.text(lines, x, currentY);
+        return lines.length;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("Payroll Hours Summary", marginLeft, y);
+      y += 8;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text(`Pay cycle: ${formatCycleRange(cycleStart, cycleEnd)}`, marginLeft, y);
+      y += 6;
+      doc.text(`Generated: ${new Date().toLocaleString()}`, marginLeft, y);
+      y += 8;
+
+      doc.setDrawColor(180);
+      doc.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 8;
+
+      sortedDates.forEach(dateKey => {
+        const dayEntries = groupedByDate[dateKey];
+        const dayTotal = dayEntries.reduce((sum, item) => sum + Number(item.hours), 0);
+
+        ensureSpace(18);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(formatDateLong(dateKey), marginLeft, y);
+        y += 6;
+
+        ensureSpace(10);
+        doc.setFillColor(245, 247, 250);
+        doc.rect(marginLeft, y - 4.5, usableWidth, 7, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text("Activity", marginLeft + 1, y);
+        doc.text("Start", 85, y);
+        doc.text("End", 105, y);
+        doc.text("Hours", 123, y);
+        doc.text("Notes", 143, y);
+        y += 7;
+
+        dayEntries.forEach(entry => {
+          const activityLines = doc.splitTextToSize(entry.activity, 30);
+          const noteLines = doc.splitTextToSize(entry.notes || "", 52);
+          const rowLines = Math.max(activityLines.length, noteLines.length, 1);
+          const rowHeight = Math.max(6, rowLines * 4);
+
+          ensureSpace(rowHeight + 2);
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.text(activityLines, marginLeft + 1, y);
+          doc.text(entry.start, 85, y);
+          doc.text(entry.end, 105, y);
+          doc.text(Number(entry.hours).toFixed(2), 123, y);
+          if (entry.notes) {
+            doc.text(noteLines, 143, y);
+          }
+
+          y += rowHeight;
+        });
+
+        ensureSpace(8);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(`Daily total: ${dayTotal.toFixed(2)} hours`, marginLeft + 1, y);
+        y += 8;
+
+        doc.setDrawColor(220);
+        doc.line(marginLeft, y - 3, pageWidth - marginRight, y - 3);
+      });
+
+      ensureSpace(16);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text(`Period total: ${cycleTotal.toFixed(2)} hours`, marginLeft, y);
+
+      const startPart = cycleStart.toISOString().slice(0, 10);
+      const endPart = cycleEnd.toISOString().slice(0, 10);
+      doc.save(`payroll-summary-${startPart}-to-${endPart}.pdf`);
+    }
+
     addActivityBtn.addEventListener("click", addActivity);
     saveEntryBtn.addEventListener("click", saveEntry);
+    cancelEditBtn.addEventListener("click", resetForm);
     startTime.addEventListener("input", updateCalculatedHours);
     endTime.addEventListener("input", updateCalculatedHours);
+    exportPdfBtn.addEventListener("click", exportPdfSummary);
+    exportCsvBtn.addEventListener("click", exportCsv);
+    prevCycleBtn.addEventListener("click", () => changeCycle(-1));
+    nextCycleBtn.addEventListener("click", () => changeCycle(1));
+    currentCycleBtn.addEventListener("click", () => {
+      selectedCycleDate = new Date();
+      renderEntries();
+    });
 
-    renderActivities();
+    renderActivitiesDropdown();
+    renderActivityManager();
     renderEntries();
-    setTodayAsDefaultDate();
+    resetForm();
   </script>
 </body>
 </html>
