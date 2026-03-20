@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Laura's Hours Tracker</title>
+  <title>Laura's Tracker</title>
 
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -276,6 +276,53 @@
       color: var(--muted);
     }
 
+    .collapse-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid #e5e7eb;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .collapse-toggle:hover {
+      background: #f9fafb;
+    }
+
+    .collapse-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .collapsible-content {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .collapsible-content.open {
+      display: block;
+    }
+
+    .activity-add-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      margin-bottom: 10px;
+    }
+
+    .activity-add-row input {
+      flex: 1;
+      min-width: 220px;
+    }
+
     @media (max-width: 980px) {
       .grid {
         grid-template-columns: 1fr;
@@ -329,7 +376,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Laura's Hours Tracker</h1>
+    <h1>Laura's Tracker</h1>
     <div class="subtitle">
       Tracks hours for the payroll cycle running from the <strong>20th to the 19th</strong>.
     </div>
@@ -346,14 +393,6 @@
           <label for="activitySelect">Activity</label>
           <select id="activitySelect"></select>
           <div class="small">Choose an activity from the saved list.</div>
-        </div>
-
-        <div class="field span-2">
-          <label for="newActivity">Add New Activity</label>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="newActivity" placeholder="e.g. Admin, Training, Support" />
-            <button type="button" class="secondary" id="addActivityBtn">Add</button>
-          </div>
         </div>
 
         <div class="field">
@@ -388,7 +427,7 @@
     <div class="card">
       <div class="toolbar">
         <div class="toolbar-left">
-          <h2 style="margin:0;">Payroll Cycle View</h2>
+          <h2 style="margin:0;">Cycle View</h2>
         </div>
         <div class="toolbar-right">
           <button type="button" class="secondary" id="exportCsvBtn">Export CSV</button>
@@ -430,14 +469,27 @@
     </div>
 
     <div class="card">
-      <h2>Manage Activities</h2>
-      <div class="small">
-        Deleting an activity removes it from the dropdown for future use. Existing saved entries will still keep their original activity name.
-      </div>
-      <div id="activityList" class="activity-list"></div>
-      <div id="activityEmptyMessage" class="empty" style="display:none;">No activities saved.</div>
-      <div class="notice">
-        Tip: activities already used in entries can still be deleted from the dropdown list without affecting old records.
+      <button type="button" class="collapse-toggle" id="manageActivitiesToggle" aria-expanded="false">
+        <span>Manage Activities</span>
+        <span class="collapse-icon" id="manageActivitiesIcon">+</span>
+      </button>
+
+      <div id="manageActivitiesContent" class="collapsible-content">
+        <div class="small">
+          Add or remove activities used in the dropdown. Deleting an activity removes it from future selection only; existing saved entries keep their original activity name.
+        </div>
+
+        <div class="activity-add-row">
+          <input type="text" id="newActivity" placeholder="Add a new activity, e.g. Admin, Training, Support" />
+          <button type="button" class="secondary" id="addActivityBtn">Add Activity</button>
+        </div>
+
+        <div id="activityList" class="activity-list"></div>
+        <div id="activityEmptyMessage" class="empty" style="display:none;">No activities saved.</div>
+
+        <div class="notice">
+          Tip: activities already used in entries can still be deleted from the dropdown list without affecting old records.
+        </div>
       </div>
     </div>
   </div>
@@ -478,6 +530,9 @@
     const prevCycleBtn = document.getElementById("prevCycleBtn");
     const nextCycleBtn = document.getElementById("nextCycleBtn");
     const currentCycleBtn = document.getElementById("currentCycleBtn");
+    const manageActivitiesToggle = document.getElementById("manageActivitiesToggle");
+    const manageActivitiesContent = document.getElementById("manageActivitiesContent");
+    const manageActivitiesIcon = document.getElementById("manageActivitiesIcon");
 
     let selectedCycleDate = new Date();
     let editingEntryId = null;
@@ -610,6 +665,20 @@
       saveActivities(filtered);
       renderActivitiesDropdown();
       renderActivityManager();
+    }
+
+    function toggleManageActivities() {
+      const isOpen = manageActivitiesContent.classList.contains("open");
+
+      if (isOpen) {
+        manageActivitiesContent.classList.remove("open");
+        manageActivitiesToggle.setAttribute("aria-expanded", "false");
+        manageActivitiesIcon.textContent = "+";
+      } else {
+        manageActivitiesContent.classList.add("open");
+        manageActivitiesToggle.setAttribute("aria-expanded", "true");
+        manageActivitiesIcon.textContent = "−";
+      }
     }
 
     function calculateHours(start, end) {
@@ -893,7 +962,7 @@
 
       let total = 0;
       const rows = [
-        ["Payroll Hours Summary"],
+        ["Laura's Summary"],
         ["Pay cycle", formatCycleRange(cycleStart, cycleEnd)],
         [],
         ["Date", "Activity", "Start", "End", "Hours", "Notes"]
@@ -925,7 +994,7 @@
       const endPart = cycleEnd.toISOString().slice(0, 10);
 
       a.href = url;
-      a.download = `payroll-summary-${startPart}-to-${endPart}.csv`;
+      a.download = `lauras-summary-${startPart}-to-${endPart}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -974,17 +1043,9 @@
         }
       }
 
-      function addWrappedText(text, x, currentY, width, fontSize = 10, style = "normal") {
-        doc.setFont("helvetica", style);
-        doc.setFontSize(fontSize);
-        const lines = doc.splitTextToSize(String(text || ""), width);
-        doc.text(lines, x, currentY);
-        return lines.length;
-      }
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
-      doc.text("Laura's Hours Summary", marginLeft, y);
+      doc.text("Laura's Summary", marginLeft, y);
       y += 8;
 
       doc.setFont("helvetica", "normal");
@@ -1059,7 +1120,7 @@
 
       const startPart = cycleStart.toISOString().slice(0, 10);
       const endPart = cycleEnd.toISOString().slice(0, 10);
-      doc.save(`payroll-summary-${startPart}-to-${endPart}.pdf`);
+      doc.save(`lauras-summary-${startPart}-to-${endPart}.pdf`);
     }
 
     addActivityBtn.addEventListener("click", addActivity);
@@ -1075,6 +1136,7 @@
       selectedCycleDate = new Date();
       renderEntries();
     });
+    manageActivitiesToggle.addEventListener("click", toggleManageActivities);
 
     renderActivitiesDropdown();
     renderActivityManager();
