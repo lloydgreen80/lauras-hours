@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payroll Hours Tracker</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --success: #059669;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .grid .span-2 {
+      grid-column: span 2;
+    }
+
+    .grid .span-3 {
+      grid-column: span 3;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .secondary:hover {
+      background: #d1d5db;
+    }
+
+    .danger {
+      background: var(--danger);
+    }
+
+    .danger:hover {
+      background: #b91c1c;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .summary-box {
+      padding: 14px 18px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      min-width: 220px;
+    }
+
+    .summary-box strong {
+      display: block;
+      font-size: 24px;
+      margin-top: 4px;
+      color: var(--success);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f9fafb;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 12px 0;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .grid .span-2,
+      .grid .span-3,
+      .grid .full {
+        grid-column: auto;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: white;
+        padding: 8px;
+      }
+
+      td {
+        border: none;
+        padding: 8px 6px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Payroll Hours Tracker</h1>
+    <div class="subtitle">
+      Tracks hours for the payroll cycle running from the <strong>20th to the 19th</strong>.
+    </div>
+
+    <div class="card">
+      <h2>Add Work Entry</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="workDate">Date</label>
+          <input type="date" id="workDate" />
+        </div>
+
+        <div class="field span-2">
+          <label for="activitySelect">Activity</label>
+          <select id="activitySelect"></select>
+          <div class="small">Choose an activity or add a new one below.</div>
+        </div>
+
+        <div class="field span-2">
+          <label for="newActivity">Add New Activity</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="newActivity" placeholder="e.g. Admin, Training, Support" />
+            <button type="button" class="secondary" id="addActivityBtn">Add</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="startTime">Start Time</label>
+          <input type="time" id="startTime" />
+        </div>
+
+        <div class="field">
+          <label for="endTime">End Time</label>
+          <input type="time" id="endTime" />
+        </div>
+
+        <div class="field">
+          <label>Calculated Hours</label>
+          <input type="text" id="calculatedHours" readonly placeholder="0.00" />
+        </div>
+
+        <div class="field full">
+          <button type="button" id="saveEntryBtn">Save Entry</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Current Payroll Cycle</h2>
+      <div class="summary">
+        <div>
+          <div id="cycleLabel"></div>
+          <div class="small">Entries shown below are only for this pay cycle.</div>
+        </div>
+        <div class="summary-box">
+          Total Hours
+          <strong id="totalHours">0.00</strong>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Activity</th>
+            <th>Start</th>
+            <th>End</th>
+            <th class="right">Hours</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="entriesTableBody"></tbody>
+      </table>
+      <div id="emptyMessage" class="empty" style="display:none;">No entries in this payroll cycle yet.</div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      activities: "payrollTrackerActivities",
+      entries: "payrollTrackerEntries"
+    };
+
+    const defaultActivities = [
+      "Admin",
+      "Training",
+      "Meetings",
+      "Support",
+      "Project Work"
+    ];
+
+    const workDate = document.getElementById("workDate");
+    const activitySelect = document.getElementById("activitySelect");
+    const newActivity = document.getElementById("newActivity");
+    const addActivityBtn = document.getElementById("addActivityBtn");
+    const startTime = document.getElementById("startTime");
+    const endTime = document.getElementById("endTime");
+    const calculatedHours = document.getElementById("calculatedHours");
+    const saveEntryBtn = document.getElementById("saveEntryBtn");
+    const entriesTableBody = document.getElementById("entriesTableBody");
+    const totalHours = document.getElementById("totalHours");
+    const cycleLabel = document.getElementById("cycleLabel");
+    const emptyMessage = document.getElementById("emptyMessage");
+
+    function loadActivities() {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.activities) || "null");
+      return Array.isArray(saved) && saved.length ? saved : defaultActivities;
+    }
+
+    function saveActivities(activities) {
+      localStorage.setItem(STORAGE_KEYS.activities, JSON.stringify(activities));
+    }
+
+    function loadEntries() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.entries) || "[]");
+    }
+
+    function saveEntries(entries) {
+      localStorage.setItem(STORAGE_KEYS.entries, JSON.stringify(entries));
+    }
+
+    function renderActivities() {
+      const activities = loadActivities();
+      activitySelect.innerHTML = "";
+
+      activities.forEach(activity => {
+        const option = document.createElement("option");
+        option.value = activity;
+        option.textContent = activity;
+        activitySelect.appendChild(option);
+      });
+    }
+
+    function addActivity() {
+      const value = newActivity.value.trim();
+      if (!value) {
+        alert("Please enter an activity name.");
+        return;
+      }
+
+      const activities = loadActivities();
+      const alreadyExists = activities.some(a => a.toLowerCase() === value.toLowerCase());
+
+      if (alreadyExists) {
+        alert("That activity already exists.");
+        return;
+      }
+
+      activities.push(value);
+      activities.sort((a, b) => a.localeCompare(b));
+      saveActivities(activities);
+      renderActivities();
+      activitySelect.value = value;
+      newActivity.value = "";
+    }
+
+    function calculateHours(start, end) {
+      if (!start || !end) return 0;
+
+      const [startH, startM] = start.split(":").map(Number);
+      const [endH, endM] = end.split(":").map(Number);
+
+      let startMinutes = startH * 60 + startM;
+      let endMinutes = endH * 60 + endM;
+
+      // Allows overnight shifts
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+
+      const diff = endMinutes - startMinutes;
+      return diff / 60;
+    }
+
+    function updateCalculatedHours() {
+      const hours = calculateHours(startTime.value, endTime.value);
+      calculatedHours.value = hours ? hours.toFixed(2) : "";
+    }
+
+    function getPayrollCycle(date = new Date()) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+
+      let cycleStart;
+      let cycleEnd;
+
+      if (date.getDate() >= 20) {
+        cycleStart = new Date(year, month, 20);
+        cycleEnd = new Date(year, month + 1, 19, 23, 59, 59, 999);
+      } else {
+        cycleStart = new Date(year, month - 1, 20);
+        cycleEnd = new Date(year, month, 19, 23, 59, 59, 999);
+      }
+
+      return { cycleStart, cycleEnd };
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr + "T00:00:00");
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function formatCycleRange(start, end) {
+      const startText = start.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+
+      const endText = end.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+
+      return `${startText} to ${endText}`;
+    }
+
+    function saveEntry() {
+      const date = workDate.value;
+      const activity = activitySelect.value;
+      const start = startTime.value;
+      const end = endTime.value;
+      const hours = calculateHours(start, end);
+
+      if (!date || !activity || !start || !end) {
+        alert("Please complete all fields.");
+        return;
+      }
+
+      if (hours <= 0) {
+        alert("End time must be after start time, unless it is an overnight shift.");
+        return;
+      }
+
+      const entries = loadEntries();
+      entries.push({
+        id: crypto.randomUUID(),
+        date,
+        activity,
+        start,
+        end,
+        hours: Number(hours.toFixed(2))
+      });
+
+      saveEntries(entries);
+      startTime.value = "";
+      endTime.value = "";
+      calculatedHours.value = "";
+      renderEntries();
+    }
+
+    function deleteEntry(id) {
+      const entries = loadEntries().filter(entry => entry.id !== id);
+      saveEntries(entries);
+      renderEntries();
+    }
+
+    function renderEntries() {
+      const entries = loadEntries();
+      const { cycleStart, cycleEnd } = getPayrollCycle(new Date());
+
+      cycleLabel.textContent = `Pay cycle: ${formatCycleRange(cycleStart, cycleEnd)}`;
+
+      const cycleEntries = entries
+        .filter(entry => {
+          const entryDate = new Date(entry.date + "T00:00:00");
+          return entryDate >= cycleStart && entryDate <= cycleEnd;
+        })
+        .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+      entriesTableBody.innerHTML = "";
+
+      if (!cycleEntries.length) {
+        emptyMessage.style.display = "block";
+      } else {
+        emptyMessage.style.display = "none";
+      }
+
+      let total = 0;
+
+      cycleEntries.forEach(entry => {
+        total += Number(entry.hours);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td data-label="Date">${formatDate(entry.date)}</td>
+          <td data-label="Activity">${entry.activity}</td>
+          <td data-label="Start">${entry.start}</td>
+          <td data-label="End">${entry.end}</td>
+          <td data-label="Hours" class="right">${Number(entry.hours).toFixed(2)}</td>
+          <td data-label="Actions">
+            <div class="row-actions">
+              <button type="button" class="danger" data-id="${entry.id}">Delete</button>
+            </div>
+          </td>
+        `;
+        entriesTableBody.appendChild(tr);
+      });
+
+      totalHours.textContent = total.toFixed(2);
+
+      document.querySelectorAll(".danger[data-id]").forEach(btn => {
+        btn.addEventListener("click", () => deleteEntry(btn.dataset.id));
+      });
+    }
+
+    function setTodayAsDefaultDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      workDate.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    addActivityBtn.addEventListener("click", addActivity);
+    saveEntryBtn.addEventListener("click", saveEntry);
+    startTime.addEventListener("input", updateCalculatedHours);
+    endTime.addEventListener("input", updateCalculatedHours);
+
+    renderActivities();
+    renderEntries();
+    setTodayAsDefaultDate();
+  </script>
+</body>
+</html>
